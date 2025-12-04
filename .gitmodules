@@ -1,3 +1,3 @@
 [submodule "aoc"]
 	path = aoc
-	url = git@github.com:davekch/aoc
+	url = git@github.com:dave7895/aoc
