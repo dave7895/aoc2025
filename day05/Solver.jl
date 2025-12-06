@@ -14,7 +14,8 @@ function parse_input(raw_data)
             continue
         end
         if reading_fresh
-            thisrange = range(parse.(Int, split(line, '-'))...)
+            #thisrange = range(parse.(Int, split(line, '-'))...)
+            thisrange = read_range(line)
             push!(freshs, thisrange)
             continue
         else
