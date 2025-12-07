@@ -7,7 +7,6 @@ using AoC.Utils
 function parse_input(raw_data)
     raw_data = strip(raw_data)
     lines = split(raw_data, '\n')
-    display(lines)
     return lines #permutedims([lines...;;])
 end
 export parse_input
@@ -15,9 +14,7 @@ export parse_input
 
 function solve1(parsed)
     lines = split.(parsed, ' ', keepempty=false)
-    display(lines)
     parsed = permutedims([lines...;;])
-
     sum = 0
     for col in eachcol(parsed)
         op = last(col) == "*" ? (*) : (+)
@@ -31,7 +28,6 @@ export solve1
 function solve2(parsed)
     sum = 0
     ops = (str -> (str == "*" ? (*) : (+))).(split(last(parsed), ' ', keepempty=false))
-    @show ops
     num_lines = parsed[begin:end-1]
     n_calc = length(ops)
     current_nums = Int[]
@@ -51,7 +47,6 @@ function solve2(parsed)
             push!(current_nums, num)
         end
     end
-    @show n_calc
     sum
 end
 export solve2
