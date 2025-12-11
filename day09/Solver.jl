@@ -48,9 +48,8 @@ function solve2(parsed)
     pparsed = Point2D.(parsed)
     @show length(pparsed)
     len = length(pparsed)
-    start = pparsed[2]
-    start_modx = false
-    start_mody = false
+
+    # add all points of the boundary
     for i in 1:len
         j = i == len ? 1 : i + 1
         diff = to_vec(pparsed[j] - pparsed[i])
@@ -62,10 +61,6 @@ function solve2(parsed)
             for k in 1:abs(diff[2])
                 p += Point2D(0, sign(diff[2]))
                 push!(pparsed, p)
-                if !start_mody
-                    start += Point2D(0, -sign(diff[2]))
-                    start_mody = true
-                end
             end
             #display(pparsed)
         elseif diff[2] == 0
@@ -73,10 +68,6 @@ function solve2(parsed)
             for k in 1:abs(diff[1])
                 p += Point2D(sign(diff[1]), 0)
                 push!(pparsed, p)
-                if !start_modx
-                    start += Point2D(sign(diff[1]), 0)
-                    start_modx = true
-                end
             end
             #display(pparsed)
         end
@@ -91,9 +82,8 @@ function solve2(parsed)
     end
     sort!(c1c2, by=area, rev=true)
     size_p1 = solve1(parsed)
-    size_p1 = 3000000000
     filter!(x->area(x)<=size_p1, c1c2)
-    @showprogress Threads.@threads :greedy for (c1, c2) in c1c2
+    @showprogress for (c1, c2) in c1c2
         (minx, maxx), (miny, maxy) = [extrema([c1[i], c2[i]]) for i in 1:2]
         #@show (minx, maxx) (miny, maxy)
         siz = area(c1, c2)
@@ -106,7 +96,8 @@ function solve2(parsed)
         c1cart = CartesianIndex(c1...)
         c2cart = CartesianIndex(c2...)
         checkfunc(pos) = (pos != c1cart) && (pos != c2cart) && (pos in points_as_cart)
-
+        
+        # there needs to be boundary on two opposite sides of the rectangle
         upper_right = false
         lower_left = false
         top_boundary = CartesianIndices((minx:maxx, miny:miny))
@@ -128,27 +119,24 @@ function solve2(parsed)
         end
         if lower_left
             #println("fulfills condition on lower_left with left_boundary and $bottom_boundary")
-            else
-                continue
-            end
+        else
+            continue
+        end
         inside = CartesianIndices((minx+1:maxx-1, miny+1:maxy-1))
         iszero(length(inside)) && continue
-        diag1 = diag(inside)
-        (any(checkfunc, diag1)) && continue
-        diag2 = (inside[i, end+1-i] for (i, j) in zip(axes(inside, 1), reverse(axes(inside, 2))))
-        any(checkfunc, diag2) && continue
-        diag3 = diag(inside, -(-(size(inside)...)))
-        (any(checkfunc, diag3)) && continue
-        diag4 = (inside[end+1-j, j] for (i, j) in zip(axes(inside, 1), reverse(axes(inside, 2))))
-        any(checkfunc, diag2) && continue
+        left_inner = inside[:, 1]
+        (any(checkfunc, left_inner)) && continue
+        right_inner = inside[:, end]
+        any(checkfunc, right_inner) && continue
+        top_inner = inside[1, :]
+        (any(checkfunc, top_inner)) && continue
+        bottom_inner = inside[end, :]
+        any(checkfunc, bottom_inner) && continue
         println(size(inside), length(inside))
-        hor = inside[:, size(inside,2)÷2+1]
-        any(checkfunc, hor) && continue
-        vert = inside[size(inside,1)÷2+1, :]
-        any(checkfunc, hor) && continue
-        @time(any(in(points_as_cart), inside)) && continue
-        @lock lck (max_size = max(max_size, siz))
+        #@time(any(in(points_as_cart), inside)) && continue
         println("accepted rectangle from $c1 to $c2 with size $siz")
+        # we are traversing in ordered direction so we can return instantly
+        siz > max_size  && return siz
         #return max_size
     end
     max_size
